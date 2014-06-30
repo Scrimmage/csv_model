@@ -6,7 +6,7 @@ Bundler::GemHelper.install_tasks
 
 desc 'Default: run the specs.'
 task :default do
-  system("bundle exec rake -s appraisal spec:unit;")
+  system("bundle exec rake -s spec:unit;")
 end
 
 namespace :spec do
