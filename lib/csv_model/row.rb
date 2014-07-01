@@ -110,6 +110,9 @@ module CSVModel
     end
 
     def process_row
+      return if @processed
+      @processed = true
+
       model_instance.assign_attributes(all_attributes)
       model_instance.mark_as_duplicate if marked_as_duplicate?
       model_instance.save(dry_run: is_dry_run?)
