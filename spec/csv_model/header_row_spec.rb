@@ -109,6 +109,15 @@ describe CSVModel::HeaderRow do
         column = subject.primary_key_columns.first
         expect(column.name).to eq("Column One")
       end
+
+      context "even if the column capitalization does not match" do
+        let(:subject) { described_class.new(data, OpenStruct.new(primary_key: ["column one"])) }
+
+        it "returns the key column" do
+          column = subject.primary_key_columns.first
+          expect(column.name).to eq("Column One")
+        end
+      end
     end
 
     context "when the row has multiple primary key columns" do

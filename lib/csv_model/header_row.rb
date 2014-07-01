@@ -33,7 +33,7 @@ module CSVModel
     end
 
     def primary_key_columns
-      @primary_key_columns ||= columns.select { |x| primary_key_column_names.include?(x.name) }
+      @primary_key_columns ||= columns.select { |x| primary_key_column_keys.include?(x.key) }
     end
 
     def valid?
@@ -107,6 +107,10 @@ module CSVModel
 
     def missing_column_names
       missing_column_keys.collect { |key| required_column_name(key) }
+    end
+
+    def primary_key_column_keys
+      primary_key_column_names.collect { |x| x.to_column_key }
     end
 
     def primary_key_column_names
