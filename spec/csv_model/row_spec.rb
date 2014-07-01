@@ -328,6 +328,13 @@ describe CSVModel::Row do
         expect(model_instance).to receive(:save)
         subject.send(:process_row)
       end
+
+      it "only processes a record once" do
+        expect(model_instance).to receive(:assign_attributes).with(:all_attributes).ordered
+        expect(model_instance).to receive(:save)
+        subject.send(:process_row)
+        subject.send(:process_row)
+      end
     end
   end
 
