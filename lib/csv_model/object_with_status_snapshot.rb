@@ -13,7 +13,7 @@ module CSVModel
         ["Record could not be created or updated"]
       else
         value = __getobj__.errors
-        value.try(:full_error_messages) || value
+        value.try(:full_messages) || value
       end
     end
 
@@ -23,6 +23,7 @@ module CSVModel
 
     def save(options = {})
       capture_state(options[:dry_run])
+      # TOCO: change to save without options
       @was_saved = was_editable? && was_valid? && (is_dry_run? || __getobj__.save(options))
     end
 

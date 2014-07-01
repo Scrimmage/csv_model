@@ -28,8 +28,8 @@ describe CSVModel::ObjectWithStatusSnapshot do
       expect(subject.errors).to eq(:some_errors)
     end
 
-    it "uses to errors#full_error_messages when available" do
-      errors = double(full_error_messages: :some_errors)
+    it "uses to errors#full_messages when available" do
+      errors = double(full_messages: :some_errors)
       model = double("model", errors: errors)
       subject = described_class.new(model)
       expect(subject.errors).to eq(:some_errors)
