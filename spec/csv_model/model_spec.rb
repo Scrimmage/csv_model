@@ -7,6 +7,32 @@ describe CSVModel::Model do
   let(:data) { [header_row.join("\t"), data_row.join("\t")].join($/) }
   let(:subject) { described_class.new(data) }
 
+  describe "header" do
+    context "with options" do
+      let(:options) { { dry_run: true } }
+      let(:subject) { described_class.new(data, options) }
+
+      it "instantiates header with options" do
+        expect(subject.header.options).to eq(options)
+      end
+    end
+  end
+
+  describe "rows" do
+    it "has a row for each data row" do
+      expect(subject.rows.count).to eq(1)
+    end
+
+    context "with options" do
+      let(:options) { { dry_run: true } }
+      let(:subject) { described_class.new(data, options) }
+
+      it "instantiates rows with options" do
+        expect(subject.rows.first.options).to eq(options)
+      end
+    end
+  end
+
   describe "#row_count" do
     it "returns 0 when no data" do
       expect(described_class.new("").row_count).to eq(0)

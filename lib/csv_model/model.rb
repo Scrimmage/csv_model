@@ -42,7 +42,7 @@ module CSVModel
     end
 
     def create_row(row)
-      row = row_class.new(header, row)
+      row = row_class.new(header, row, options)
       row.mark_as_duplicate unless keys.add?(row.key)
       row
     end
