@@ -43,12 +43,17 @@ module CSVModel
 
     def create_row(row)
       row = row_class.new(header, row, options)
-      row.mark_as_duplicate unless row.key.all_values_blank? || keys.add?(row.key)
+      row.mark_as_duplicate if is_duplicate_key?(row.key)
       row
     end
 
     def header_class
       option(:header_class, HeaderRow)
+    end
+
+    def is_duplicate_key?(value)
+      return false if value.nil? || value == "" || (value.is_a?(Array) && value.all_values_blank?)
+      !keys.add?(value)
     end
 
     def parse_data
