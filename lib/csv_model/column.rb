@@ -2,8 +2,9 @@ using CSVModel::Extensions
 
 module CSVModel
   class Column
+    include Utilities::Options
 
-    attr_reader :name, :options
+    attr_reader :name
 
     def initialize(name, options = {})
       @name = name
@@ -20,12 +21,6 @@ module CSVModel
 
     def model_attribute
       key.underscore.to_sym
-    end
-
-    private
-
-    def option(key, default)
-      options.try(:[], key) || options.try(key) || default
     end
 
   end

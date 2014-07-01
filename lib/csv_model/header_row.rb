@@ -2,8 +2,9 @@ using CSVModel::Extensions
 
 module CSVModel
   class HeaderRow
+    include Utilities::Options
 
-    attr_reader :data, :options
+    attr_reader :data
 
     def initialize(data, options = {})
       @data = data
@@ -89,7 +90,7 @@ module CSVModel
     end
 
     def legal_column_names
-      option(:legal_columns)
+      option(:legal_columns, [])
     end
 
     def legal_column_keys
@@ -109,7 +110,7 @@ module CSVModel
     end
 
     def primary_key_column_names
-      option(:primary_key)
+      option(:primary_key, [])
     end
 
     def required_column_keys
@@ -121,13 +122,7 @@ module CSVModel
     end
 
     def required_column_names
-      option(:required_columns)
-    end
-
-    private
-    
-    def option(key)
-      options.try(:[], key) || options.try(key) || []
+      option(:required_columns, [])
     end
 
   end

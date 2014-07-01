@@ -2,7 +2,9 @@ using CSVModel::Extensions
 
 module CSVModel
   class Row
-    attr_reader :data, :header, :marked_as_duplicate, :options
+    include Utilities::Options
+
+    attr_reader :data, :header, :marked_as_duplicate
 
     def initialize(header, data, options = {})
       @header = header
@@ -82,7 +84,7 @@ module CSVModel
     end
 
     def is_dry_run?
-      options[:dry_run] || false
+      option(:dry_run, false)
     end
 
     def model
@@ -117,10 +119,6 @@ module CSVModel
 
     def inherit_or_delegate(method, *args)
       try(method, *args) || model.try(method, *args)
-    end
-
-    def option(key, default = nil)
-      options.try(:[], key) || options.try(key) || default
     end
 
   end
