@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    csv_model (0.0.6)
+    csv_model (0.1.0)
 
 GEM
   remote: https://rubygems.org/
