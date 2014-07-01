@@ -23,8 +23,7 @@ module CSVModel
 
     def save(options = {})
       capture_state(options[:dry_run])
-      # TOCO: change to save without options
-      @was_saved = was_editable? && was_valid? && (is_dry_run? || __getobj__.save(options))
+      @was_saved = was_editable? && was_valid? && (is_dry_run? || save_or_destroy)
     end
 
     def status
@@ -60,13 +59,16 @@ module CSVModel
       @is_dry_run
     end
 
+    def save_or_destroy
+      marked_for_destruction? ? __getobj__.destroy : __getobj__.save
+    end
+
     def status_for_existing_record
       return DELETE if was_deleted?
       return NOT_CHANGED if !was_changed?
       return UPDATE if was_valid? && was_saved?
       ERROR_ON_UPDATE # if (!was_editable? || !was_valid? || !was_saved?)
     end
-
 
     def status_for_new_record
       return ERROR_ON_DELETE if was_deleted?
