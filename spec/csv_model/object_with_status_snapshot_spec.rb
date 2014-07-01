@@ -46,9 +46,31 @@ describe CSVModel::ObjectWithStatusSnapshot do
   end
 
   describe "#save" do
-    it "only calls save on underlying model if model is valid" do
-      expect(model).to_not receive(:save)
-      subject.save
+    context "with an invalid model" do
+      let(:model) { double("model", changed?: true, marked_for_destruction?: false, new_record?: true, valid?: false) }
+
+      it "does not calls save on underlying model" do
+        expect(model).to_not receive(:save)
+        subject.save
+      end
+    end
+
+    context "on a normal-run with an editable, valid model" do
+      let(:model) { double("model", changed?: true, marked_for_destruction?: false, new_record?: false, valid?: true) }
+
+      it "calls save on underlying model" do
+        expect(model).to receive(:save)
+        subject.save
+      end
+    end
+    
+    context "on a normal-run with an editable, valid model that is marked for destruction" do
+      let(:model) { double("model", changed?: true, marked_for_destruction?: true, new_record?: false, valid?: true) }
+
+      it "calls destroy on underlying model" do
+        expect(model).to receive(:destroy)
+        subject.save
+      end
     end
 
     describe "internals" do
