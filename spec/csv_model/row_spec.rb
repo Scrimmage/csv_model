@@ -37,16 +37,26 @@ describe CSVModel::Row do
       before do
         subject.mark_as_duplicate
       end
- 
-      it "returns an error" do
-        expect(subject.errors).to include("Duplicate row")
+
+      context "during normal processing" do
+        it "does not return an error" do
+          expect(subject.errors).to_not include("Duplicate row")
+        end
       end
 
-      context "when the row has a primary key" do
-        let(:primary_key_columns) { [column] }
+      context "during a dry-run" do
+        let(:subject) { described_class.new(header, data, dry_run: true) }
 
-        it "returns an error specific to the column" do
-          expect(subject.errors).to include("Duplicate Column One")
+        it "returns an error" do
+          expect(subject.errors).to include("Duplicate row")
+        end
+
+        context "when the row has a primary key" do
+          let(:primary_key_columns) { [column] }
+
+          it "returns an error specific to the column" do
+            expect(subject.errors).to include("Duplicate Column One")
+          end
         end
       end
     end

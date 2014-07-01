@@ -20,7 +20,7 @@ module CSVModel
 
     def errors
       errors = []
-      errors << duplicate_row_error if marked_as_duplicate?
+      errors << duplicate_row_error if is_dry_run? && marked_as_duplicate?
       errors << model_instance.errors if !model_instance.valid?
       errors.flatten
     end
