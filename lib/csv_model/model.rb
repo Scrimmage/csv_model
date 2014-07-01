@@ -2,13 +2,15 @@ using CSVModel::Extensions
 
 module CSVModel
   class Model
+    include Utilities::Options
 
-    attr_reader :data, :header, :options, :parse_error, :rows
+    attr_reader :data, :header, :keys, :parse_error, :rows
 
     def initialize(data, options = {})
       @data = data
       @rows = []
       @options = options
+      @keys = Set.new
     end
 
     def row_count
@@ -33,18 +35,30 @@ module CSVModel
       end
     end
 
-    private
+    protected
+
+    def create_header_row(row)
+      header_class.new(row, options)
+    end
+
+    def create_row(row)
+      row = row_class.new(header, row)
+      row.mark_as_duplicate unless keys.add?(row.key)
+      row
+    end
+
+    def header_class
+      option(:header_class, HeaderRow)
+    end
 
     def parse_data
       return if @parsed
       @parsed = true
 
       begin
-        keys = Set.new
-
         CSV.parse(data, { col_sep: "\t" }).each_with_index do |row, index|
           if index == 0
-            @header = HeaderRow.new(row, options)
+            @header = create_header_row(row)
           end
 
           if row.size != header.column_count
@@ -57,9 +71,7 @@ module CSVModel
           # end
 
           if index > 0 
-            row = Row.new(header, row)
-            row.mark_as_duplicate unless keys.add?(row.key)
-            @rows << row
+            @rows << create_row(row)
           end
         end
       rescue CSV::MalformedCSVError => e
@@ -70,6 +82,10 @@ module CSVModel
         @parse_error = "An unexpected error occurred. Please try again or contact support if the issue persists: #{e.message}"
       end
     end
-  end
 
+    def row_class
+      option(:row_class, Row)
+    end
+
+  end
 end

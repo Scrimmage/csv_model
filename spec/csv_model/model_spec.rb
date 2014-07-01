@@ -77,6 +77,35 @@ describe CSVModel::Model do
 
   describe "internals" do
     describe "#parse_data" do
+      context "with a custom header row class" do
+        class TestHeaderRow < CSVModel::HeaderRow; end
+
+        let(:subject) { described_class.new(data, header_class: TestHeaderRow) }
+
+        before do
+          subject.send(:parse_data)
+        end
+
+        it "uses the custom class in parsing" do
+          expect(subject.header.class).to eq(TestHeaderRow)
+        end
+      end
+
+      context "With a custom row class" do
+        class TestRow < CSVModel::Row; end
+
+        let(:subject) { described_class.new(data, row_class: TestRow) }
+
+        before do
+          subject.send(:parse_data)
+        end
+
+        it "uses the custom class in parsing" do
+          expect(subject.rows.count).to eq(1)
+          expect(subject.rows.first.class).to eq(TestRow)
+        end
+      end
+
       context "with duplicate rows" do
         let(:data) { [header_row.join("\t"), data_row.join("\t"), data_row.join("\t"), data_row.join("\t")].join($/) }
 
