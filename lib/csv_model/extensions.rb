@@ -1,6 +1,14 @@
 module CSVModel
   module Extensions
 
+    refine Array do
+      def all_values_blank?
+        return true if empty?
+        each { |value| return false if !value.nil? && value.try(:strip) != "" }
+        true
+      end
+    end
+
     refine NilClass do
       def try(*args)
         nil

@@ -139,17 +139,27 @@ describe CSVModel::Model do
           subject.send(:parse_data)
         end
 
-        it "does not mark the first row as a duplicate" do
-          expect(subject.rows.first.marked_as_duplicate?).to eq(false)
+        context "when primary key is present" do
+          it "does not mark the first row as a duplicate" do
+            expect(subject.rows.first.marked_as_duplicate?).to eq(false)
+          end
+
+          it "marks subsequent instances as a duplicates" do
+            rows = subject.rows
+            rows.shift
+            rows.each { |row| expect(row.marked_as_duplicate?).to eq(true) }
+          end
         end
 
-        it "marks subsequent instances as a duplicates" do
-          rows = subject.rows
-          rows.shift
-          rows.each { |row| expect(row.marked_as_duplicate?).to eq(true) }
+        context "when no primary key is present" do
+          let(:data_row) { ["", ""] }
+
+          it "does not mark any row as a duplicate" do
+            subject.rows.each { |row| expect(row.marked_as_duplicate?).to eq(false) }
+          end
         end
+
       end
     end
   end
-
 end
