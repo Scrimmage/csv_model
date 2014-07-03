@@ -9,6 +9,7 @@ module CSVModel
     def initialize(data, options = {})
       @data = data
       @options = options
+      validate_options
     end
 
     def columns
@@ -24,23 +25,42 @@ module CSVModel
     end
 
     def errors
-      duplicate_column_errors + illegal_column_errors + missing_column_errors
+      duplicate_column_errors + illegal_column_errors + missing_column_errors + missing_key_column_errors
     end
 
-    # TODO: Remove? Not currently used.
     def has_column?(key)
       !column_index(key).nil?
     end
 
     def primary_key_columns
-      @primary_key_columns ||= columns.select { |x| primary_key_column_keys.include?(x.key) }
+      @primary_key_columns ||= begin
+        if has_primary_key? && has_primary_key_columns?
+          primary_primary_key_columns
+        elsif has_alternate_primary_key? && has_alternate_primary_key_columns?
+          alternate_primary_key_columns
+        else
+          []
+        end
+      end
     end
 
     def valid?
-      has_required_columns? && !has_duplicate_columns? && !has_illegal_columns?
+      has_required_columns? && has_required_key_columns? && !has_duplicate_columns? && !has_illegal_columns?
     end
 
     protected
+
+    def alternate_primary_key_columns
+      columns.select { |x| alternate_primary_key_column_keys.include?(x.key) }
+    end
+
+    def alternate_primary_key_column_keys
+      alternate_primary_key_column_names.collect { |x| x.to_column_key }
+    end
+
+    def alternate_primary_key_column_names
+      option(:alternate_primary_key, [])
+    end
 
     def column_keys
       @column_keys ||= columns.collect { |x| x.key }
@@ -65,6 +85,14 @@ module CSVModel
         .collect { |key, count| column_name(key) }
     end
 
+    def has_alternate_primary_key?
+      alternate_primary_key_column_names.any?
+    end
+
+    def has_alternate_primary_key_columns?
+      missing_alternate_primary_key_column_keys.empty?
+    end
+
     def has_duplicate_columns?
       data.count != column_map.keys.count
     end
@@ -75,6 +103,18 @@ module CSVModel
 
     def has_required_columns?
       missing_column_keys.empty?
+    end
+
+    def has_required_key_columns?
+      !has_primary_key? || (has_primary_key? && has_primary_key_columns?) || (has_alternate_primary_key? && has_alternate_primary_key_columns?)
+    end
+
+    def has_primary_key?
+      primary_key_column_names.any?
+    end
+
+    def has_primary_key_columns?
+      missing_primary_key_column_keys.empty?
     end
 
     def illegal_column_errors
@@ -97,6 +137,10 @@ module CSVModel
       legal_column_names.collect { |x| x.to_column_key }
     end
 
+    def missing_alternate_primary_key_column_keys
+      alternate_primary_key_column_keys - column_keys
+    end
+
     def missing_column_errors
       missing_column_names.collect { |name| "Missing column #{name}" }
     end
@@ -109,8 +153,32 @@ module CSVModel
       missing_column_keys.collect { |key| required_column_name(key) }
     end
 
+    def missing_primary_key_column_keys
+      primary_key_column_keys - column_keys
+    end
+
+    def missing_primary_key_column_names
+      missing_primary_key_column_keys.collect { |key| primary_key_column_name(key) }
+    end
+
+    def missing_key_column_errors
+      has_alternate_primary_key? && has_alternate_primary_key_columns? ? [] : primary_key_column_errors
+    end
+
+    def primary_primary_key_columns
+      columns.select { |x| primary_key_column_keys.include?(x.key) }
+    end
+
+    def primary_key_column_errors
+      missing_primary_key_column_names.collect { |name| "Missing primary key column #{name}" }
+    end
+
     def primary_key_column_keys
       primary_key_column_names.collect { |x| x.to_column_key }
+    end
+
+    def primary_key_column_name(column_key)
+      primary_key_column_names.find { |entry| entry.to_column_key == column_key }
     end
 
     def primary_key_column_names
@@ -129,5 +197,27 @@ module CSVModel
       option(:required_columns, [])
     end
 
+    def validate_options
+      if !option(:primary_key).nil? && primary_key_column_keys.empty?
+        raise ArgumentError.new("The primary_key cannot be be empty.")
+      end
+
+      if legal_column_keys.any? && (primary_key_column_keys - legal_column_keys).any?
+        raise ArgumentError.new("The primary_key cannot contain columns that are not included in legal_column_keys.")
+      end
+
+      if primary_key_column_names.empty? && alternate_primary_key_column_names.any?
+        raise ArgumentError.new("The alternate_primary_key cannot be specified if no primary_key is specified.")
+      end
+
+      if !option(:alternate_primary_key).nil? && primary_key_column_keys == alternate_primary_key_column_keys
+        raise ArgumentError.new("The alternate_primary_key cannot be identical to the primary_key.")
+      end
+
+      if legal_column_keys.any? && (alternate_primary_key_column_keys - legal_column_keys).any?
+        raise ArgumentError.new("The alternate_primary_key cannot contain columns that are not included in legal_column_keys.")
+      end
+    end
   end
+
 end
