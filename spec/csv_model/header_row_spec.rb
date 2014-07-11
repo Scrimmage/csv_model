@@ -106,7 +106,12 @@ describe CSVModel::HeaderRow do
 
     it "returns required column message when header is missing required primary key columns" do
       subject = described_class.new(data, primary_key: ["Column Two"])
-      expect(subject.errors).to eq(["Missing primary key column Column Two"])
+      expect(subject.errors).to eq(["Missing column Column Two"])
+    end
+
+    it "returns single message when column is missing required and primary key" do
+      subject = described_class.new(data, primary_key: ["Column Two"], required_columns: ["Column Two"])
+      expect(subject.errors).to eq(["Missing column Column Two"])
     end
 
     it "returns empty array when header is missing required primary key column but alternate is available" do
@@ -116,7 +121,7 @@ describe CSVModel::HeaderRow do
 
     it "returns required column message when header is missing required primary key and alternate is not available " do
       subject = described_class.new(data, primary_key: ["Column Two"], alternate_primary_key: ["Column Three"])
-      expect(subject.errors).to eq(["Missing primary key column Column Two"])
+      expect(subject.errors).to eq(["Missing column Column Two"])
     end
   end
 
