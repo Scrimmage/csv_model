@@ -31,7 +31,7 @@ module CSVModel
       end
 
       def underscore
-        tr(' ', '_').tr("-", "_")        
+        tr(' ', '_').tr("-", "_")
       end
     end
 
