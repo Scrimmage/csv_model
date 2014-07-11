@@ -87,12 +87,12 @@ module CSVModel
       option(:dry_run, false)
     end
 
-    def model
-      option(:model)
-    end
-
     def model_adaptor
       CSVModel::RowActiveRecordAdaptor
+    end
+
+    def model_finder
+      option(:row_model_finder)
     end
 
     def model_instance
@@ -125,7 +125,7 @@ module CSVModel
     private
 
     def inherit_or_delegate(method, *args)
-      try(method, *args) || model.try(method, *args)
+      try(method, *args) || model_finder.try(method, *args)
     end
 
   end

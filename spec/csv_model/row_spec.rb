@@ -19,12 +19,12 @@ describe CSVModel::Row do
 
   describe "#errors" do
     context "when no errors" do
-      let(:model) { double("model") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:model_finder) { double("model-finder") }
+      let(:subject) { described_class.new(header, data, row_model_finder: model_finder) }
       let(:model_instance) { double("model-instance", changed?: false, marked_for_destruction?: false, new_record?: false, valid?: true) }
 
       before do
-        allow(model).to receive(:find_row_model).and_return(model_instance)
+        allow(model_finder).to receive(:find_row_model).and_return(model_instance)
         allow(model_instance).to receive(:save)
       end
 
@@ -62,13 +62,13 @@ describe CSVModel::Row do
     end
 
     context "when the model instance has errors" do
-      let(:model) { double("model") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:model_finder) { double("model-finder") }
+      let(:subject) { described_class.new(header, data, row_model_finder: model_finder) }
       let(:model_instance) { double("model-instance", changed?: false, errors: errors, marked_for_destruction?: false, new_record?: false, valid?: false) }
       let(:errors) { ["Message one", "Message two"] }
 
       before do
-        allow(model).to receive(:find_row_model).and_return(model_instance)
+        allow(model_finder).to receive(:find_row_model).and_return(model_instance)
       end
 
       it "includes the model instance errors" do
@@ -214,8 +214,8 @@ describe CSVModel::Row do
     end
 
     describe "#inherit_or_delegate" do
-      let(:model) { double("model") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:model_finder) { double("model-finder") }
+      let(:subject) { described_class.new(header, data, row_model_finder: model_finder) }
 
       it "doesn't respond to inherit_or_delegate" do
         expect(subject.respond_to?(:inherit_or_delegate)).to eq(false)
@@ -233,7 +233,7 @@ describe CSVModel::Row do
       end
 
       it "invokes delegate method if delegate exists and internal method is not defined" do
-        expect(model).to receive(:some_method).with(:multiple, :args).and_return(:some_value)
+        expect(model_finder).to receive(:some_method).with(:multiple, :args).and_return(:some_value)
         expect(subject.send(:inherit_or_delegate, :some_method, :multiple, :args)).to eq(:some_value)
       end
     end
@@ -278,9 +278,9 @@ describe CSVModel::Row do
     end
 
     describe "#model_instance" do
-      let(:model) { double("model") }
+      let(:model_finder) { double("model-finder") }
       let(:model_instance) { double("model-instance") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:subject) { described_class.new(header, data, row_model_finder: model_finder) }
 
       before do
         allow(subject).to receive(:key_attributes).and_return(:key_attributes)
@@ -298,7 +298,7 @@ describe CSVModel::Row do
       end
 
       it "tries to find an instance via model#find_row_model when #find_row_model does not exist" do
-        expect(model).to receive(:find_row_model).with(:key_attributes).and_return(model_instance)
+        expect(model_finder).to receive(:find_row_model).with(:key_attributes).and_return(model_instance)
         expect(subject.send(:model_instance)).to eq(model_instance)
       end
 
@@ -313,19 +313,19 @@ describe CSVModel::Row do
       end
 
       it "tries to instantiate a new model via model#new_row_model when a model cannot be found and #new_row_model does not exist" do
-        expect(model).to receive(:find_row_model).with(:key_attributes).and_return(nil)
-        expect(model).to receive(:new_row_model).with(:key_attributes).and_return(model_instance)
+        expect(model_finder).to receive(:find_row_model).with(:key_attributes).and_return(nil)
+        expect(model_finder).to receive(:new_row_model).with(:key_attributes).and_return(model_instance)
         expect(subject.send(:model_instance)).to eq(model_instance)
       end
     end
 
     describe "#process_row" do
-      let(:model) { double("model") }
+      let(:model_finder) { double("model-finder") }
       let(:model_instance) { double("model-instance", changed?: true, marked_for_destruction?: false, new_record?: false, valid?: true) }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:subject) { described_class.new(header, data, row_model_finder: model_finder) }
 
       before do
-        allow(model).to receive(:find_row_model).and_return(model_instance)
+        allow(model_finder).to receive(:find_row_model).and_return(model_instance)
         allow(subject).to receive(:all_attributes).and_return(:all_attributes)
       end
 
