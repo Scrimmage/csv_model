@@ -91,11 +91,15 @@ module CSVModel
       option(:model)
     end
 
+    def model_adaptor
+      CSVModel::RowActiveRecordAdaptor
+    end
+
     def model_instance
       @model_instance ||= begin
         x = inherit_or_delegate(:find_row_model, key_attributes) 
         x ||= inherit_or_delegate(:new_row_model, key_attributes)
-        x = CSVModel::ObjectWithStatusSnapshot.new(x)
+        x = model_adaptor.new(x)
       end
     end
 

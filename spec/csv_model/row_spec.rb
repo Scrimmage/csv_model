@@ -167,7 +167,7 @@ describe CSVModel::Row do
     end
 
     it "is delegates status to the model" do
-      expect(CSVModel::ObjectWithStatusSnapshot).to receive(:new).and_return(wrapper)
+      expect(CSVModel::RowActiveRecordAdaptor).to receive(:new).and_return(wrapper)
       expect(subject.status).to eq(:some_status)
     end
   end

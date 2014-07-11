@@ -1,7 +1,7 @@
 using CSVModel::Extensions
 
 module CSVModel
-  class ObjectWithStatusSnapshot < SimpleDelegator
+  class RowActiveRecordAdaptor < SimpleDelegator
     include RecordStatus
 
     def assign_attributes(attributes)
