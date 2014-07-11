@@ -71,7 +71,9 @@ module CSVModel
     end
 
     def column_attributes_with_values(cols)
-      Hash[cols.collect { |col| [col.model_attribute, index(col.key)] }]
+      values = Hash[cols.collect { |col| [col.model_attribute, index(col.key)] }]
+      values = inherit_or_delegate(:map_row_to_model, values)
+      values
     end
 
     def column_index(key)
