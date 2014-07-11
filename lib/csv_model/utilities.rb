@@ -7,7 +7,10 @@ module CSVModel
       attr_reader :options
 
       def option(key, default = nil)
-        options.try(:[], key) || options.try(key) || default
+        value = options.try(:[], key) 
+        value = options.try(key) if value.nil?
+        value = default if value.nil?
+        value
       end
 
     end

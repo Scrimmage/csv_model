@@ -139,12 +139,19 @@ describe CSVModel::Model do
           subject.send(:parse_data)
         end
 
+        context "with duplicate checking disabled" do
+          let(:subject) { described_class.new(data, detect_duplicate_rows: false, primary_key: [header_row.first]) }
+
+          it "does not mark any row as a duplicate" do
+            subject.rows.each { |row| expect(row.marked_as_duplicate?).to eq(false) }
+          end
+        end
+
         context "with a single column primary key" do
           let(:subject) { described_class.new(data, primary_key: [header_row.first]) }
 
           context "when primary key values are present" do
             it "does not mark the first row as a duplicate" do
-              puts subject.structure_errors
               expect(subject.rows.first.marked_as_duplicate?).to eq(false)
             end
 
@@ -185,7 +192,6 @@ describe CSVModel::Model do
             end
           end
         end
-
       end
     end
   end

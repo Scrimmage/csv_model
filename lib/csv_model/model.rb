@@ -47,12 +47,16 @@ module CSVModel
       row
     end
 
+    def detect_duplicate_rows?
+      option(:detect_duplicate_rows, true)
+    end
+
     def header_class
       option(:header_class, HeaderRow)
     end
 
     def is_duplicate_key?(value)
-      return false if value.nil? || value == "" || (value.is_a?(Array) && value.all_values_blank?)
+      return false if !detect_duplicate_rows? || value.nil? || value == "" || (value.is_a?(Array) && value.all_values_blank?)
       !keys.add?(value)
     end
 
