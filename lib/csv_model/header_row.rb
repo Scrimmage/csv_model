@@ -25,7 +25,7 @@ module CSVModel
     end
 
     def errors
-      duplicate_column_errors + illegal_column_errors + missing_column_errors + missing_key_column_errors
+      (duplicate_column_errors + illegal_column_errors + missing_column_errors + missing_key_column_errors).uniq
     end
 
     def has_column?(key)
@@ -170,7 +170,7 @@ module CSVModel
     end
 
     def primary_key_column_errors
-      missing_primary_key_column_names.collect { |name| "Missing primary key column #{name}" }
+      missing_primary_key_column_names.collect { |name| "Missing column #{name}" }
     end
 
     def primary_key_column_keys
