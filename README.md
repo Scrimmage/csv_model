@@ -41,9 +41,10 @@ Example Usage
 options = {
   dry_run: is_dry_run?,
   legal_columns: structure.legal_columns,
-  model: model_finder,
   primary_key: structure.primary_key_columns,
-  required_columns: structure.required_columns
+  required_columns: structure.required_columns,
+  row_model_finder: model_finder,
+  row_model_mapper: model_mapper,
 }
 
 cm = CSVModel::Model.new(data, options)
