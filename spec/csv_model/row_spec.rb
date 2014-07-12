@@ -199,7 +199,7 @@ describe CSVModel::Row do
         let(:subject) { described_class.new(header, data, row_model_mapper: model_mapper) }
 
         before do
-          allow(model_mapper).to receive(:map).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
+          allow(model_mapper).to receive(:map_all_attributes).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
         end
 
         it "maps attributes" do
@@ -294,7 +294,7 @@ describe CSVModel::Row do
         let(:subject) { described_class.new(header, data, row_model_mapper: model_mapper) }
 
         before do
-          allow(model_mapper).to receive(:map).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
+          allow(model_mapper).to receive(:map_key_attributes).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
         end
 
         it "maps attributes" do

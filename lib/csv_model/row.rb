@@ -36,7 +36,11 @@ module CSVModel
       end
     end
 
-    def map(attrs)
+    def map_all_attributes(attrs)
+      attrs
+    end
+
+    def map_key_attributes(attrs)
       attrs
     end
 
@@ -67,7 +71,7 @@ module CSVModel
     private
 
     def all_attributes
-      @all_attributes ||= column_attributes_with_values(columns)
+      @all_attributes ||= model_mapper.map_all_attributes(column_attributes_with_values(columns))
     end
 
     def columns
@@ -75,8 +79,7 @@ module CSVModel
     end
 
     def column_attributes_with_values(cols)
-      attrs = Hash[cols.collect { |col| [col.model_attribute, index(col.key)] }]
-      model_mapper.map(attrs)
+      Hash[cols.collect { |col| [col.model_attribute, index(col.key)] }]
     end
 
     def column_index(key)
@@ -114,9 +117,8 @@ module CSVModel
 
     def key_attributes
       cols = primary_key_columns.any? ? primary_key_columns : columns
-      @key_attributes ||= column_attributes_with_values(cols)
+      @key_attributes ||= model_mapper.map_key_attributes(column_attributes_with_values(cols))
     end
-
 
     def primary_key_columns
       header.primary_key_columns
