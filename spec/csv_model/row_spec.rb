@@ -194,6 +194,19 @@ describe CSVModel::Row do
         expect(subject.send(:all_attributes)).to eq(column_one: "Value One")
       end
 
+      context "with a column mapping" do
+        let(:model_mapper) { double("model-mapper") }
+        let(:subject) { described_class.new(header, data, row_model_mapper: model_mapper) }
+
+        before do
+          allow(model_mapper).to receive(:map).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
+        end
+
+        it "maps attributes" do
+          expect(subject.send(:all_attributes)).to eq(mapped_key: "mapped_value")
+        end
+      end
+
       context "with multiple columns" do
         let(:columns) { [
           double("column", key: "column one", model_attribute: :column_one),
@@ -273,6 +286,19 @@ describe CSVModel::Row do
 
         it "returns the value for the key columns" do
           expect(subject.send(:key_attributes)).to eq(column_one: "Value One", column_two: "Value Two")
+        end
+      end
+
+      context "with a column mapping" do
+        let(:model_mapper) { double("model-mapper") }
+        let(:subject) { described_class.new(header, data, row_model_mapper: model_mapper) }
+
+        before do
+          allow(model_mapper).to receive(:map).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
+        end
+
+        it "maps attributes" do
+          expect(subject.send(:key_attributes)).to eq(mapped_key: "mapped_value")
         end
       end
     end

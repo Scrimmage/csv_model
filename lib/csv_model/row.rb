@@ -36,6 +36,10 @@ module CSVModel
       end
     end
 
+    def map(attrs)
+      attrs
+    end
+
     def marked_as_duplicate?
       !!marked_as_duplicate
     end
@@ -71,9 +75,8 @@ module CSVModel
     end
 
     def column_attributes_with_values(cols)
-      values = Hash[cols.collect { |col| [col.model_attribute, index(col.key)] }]
-      values = inherit_or_delegate(:map_row_to_model, values)
-      values
+      attrs = Hash[cols.collect { |col| [col.model_attribute, index(col.key)] }]
+      model_mapper.map(attrs)
     end
 
     def column_index(key)
@@ -103,6 +106,10 @@ module CSVModel
         x ||= inherit_or_delegate(:new_row_model, key_attributes)
         x = model_adaptor.new(x)
       end
+    end
+
+    def model_mapper
+      option(:row_model_mapper, self)
     end
 
     def key_attributes
