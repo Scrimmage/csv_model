@@ -4,13 +4,16 @@ module CSVModel
   class Row
     include Utilities::Options
 
-    attr_reader :data, :header, :marked_as_duplicate
+    attr_reader :data, :header, :model_index, :marked_as_duplicate
 
-    def initialize(header, data, options = {})
+    def initialize(header, data, model_index, options = {})
       @header = header
       @data = data
+      @model_index = model_index
       @options = options
     end
+
+    alias_method :csv_index, :model_index
 
     def index(value)
       index = column_index(value) || value
@@ -50,6 +53,16 @@ module CSVModel
 
     def mark_as_duplicate
       @marked_as_duplicate = true
+    end
+
+    def process_row
+      return model_instance.status if @processed
+      @processed = true
+
+      model_instance.assign_attributes(all_attributes)
+      model_instance.mark_as_duplicate if marked_as_duplicate?
+      model_instance.save(dry_run: is_dry_run?)
+      model_instance.status
     end
 
     def status
@@ -122,15 +135,6 @@ module CSVModel
 
     def primary_key_columns
       header.primary_key_columns
-    end
-
-    def process_row
-      return if @processed
-      @processed = true
-
-      model_instance.assign_attributes(all_attributes)
-      model_instance.mark_as_duplicate if marked_as_duplicate?
-      model_instance.save(dry_run: is_dry_run?)
     end
 
     private
