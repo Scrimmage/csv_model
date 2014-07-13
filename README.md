@@ -53,7 +53,8 @@ if cm.structure_valid?
   puts "Found structural errors: #{csv.structure_errors.inspect}"
 else
   cm.rows.each do |row|
-    puts "Found row #{row.key} with status #{rows.status} and errors #{row.errors.inspect}"
+    status = row.process_row
+    puts "Found row #{row.key} with status #{status} and errors #{row.errors.inspect}"
   end
 end
 ```
