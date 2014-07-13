@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe CSVModel::ObjectWithStatusSnapshot do
+describe CSVModel::RowActiveRecordAdaptor do
   let(:model) { double("model", changed?: false, marked_for_destruction?: false, new_record?: false, valid?: false) }
   let(:subject) { described_class.new(model) }
 

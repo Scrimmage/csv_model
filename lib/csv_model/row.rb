@@ -4,13 +4,16 @@ module CSVModel
   class Row
     include Utilities::Options
 
-    attr_reader :data, :header, :marked_as_duplicate
+    attr_reader :data, :header, :model_index, :marked_as_duplicate
 
-    def initialize(header, data, options = {})
+    def initialize(header, data, model_index, options = {})
       @header = header
       @data = data
+      @model_index = model_index
       @options = options
     end
+
+    alias_method :csv_index, :model_index
 
     def index(value)
       index = column_index(value) || value
@@ -36,12 +39,30 @@ module CSVModel
       end
     end
 
+    def map_all_attributes(attrs)
+      attrs
+    end
+
+    def map_key_attributes(attrs)
+      attrs
+    end
+
     def marked_as_duplicate?
       !!marked_as_duplicate
     end
 
     def mark_as_duplicate
       @marked_as_duplicate = true
+    end
+
+    def process_row
+      return model_instance.status if @processed
+      @processed = true
+
+      model_instance.assign_attributes(all_attributes)
+      model_instance.mark_as_duplicate if marked_as_duplicate?
+      model_instance.save(dry_run: is_dry_run?)
+      model_instance.status
     end
 
     def status
@@ -63,7 +84,7 @@ module CSVModel
     private
 
     def all_attributes
-      @all_attributes ||= column_attributes_with_values(columns)
+      @all_attributes ||= model_mapper.map_all_attributes(column_attributes_with_values(columns))
     end
 
     def columns
@@ -87,41 +108,39 @@ module CSVModel
       option(:dry_run, false)
     end
 
-    def model
-      option(:model)
+    def model_adaptor
+      CSVModel::RowActiveRecordAdaptor
+    end
+
+    def model_finder
+      option(:row_model_finder)
     end
 
     def model_instance
       @model_instance ||= begin
         x = inherit_or_delegate(:find_row_model, key_attributes) 
         x ||= inherit_or_delegate(:new_row_model, key_attributes)
-        x = CSVModel::ObjectWithStatusSnapshot.new(x)
+        x = model_adaptor.new(x)
       end
+    end
+
+    def model_mapper
+      option(:row_model_mapper, self)
     end
 
     def key_attributes
       cols = primary_key_columns.any? ? primary_key_columns : columns
-      @key_attributes ||= column_attributes_with_values(cols)
+      @key_attributes ||= model_mapper.map_key_attributes(column_attributes_with_values(cols))
     end
-
 
     def primary_key_columns
       header.primary_key_columns
     end
 
-    def process_row
-      return if @processed
-      @processed = true
-
-      model_instance.assign_attributes(all_attributes)
-      model_instance.mark_as_duplicate if marked_as_duplicate?
-      model_instance.save(dry_run: is_dry_run?)
-    end
-
     private
 
     def inherit_or_delegate(method, *args)
-      try(method, *args) || model.try(method, *args)
+      try(method, *args) || model_finder.try(method, *args)
     end
 
   end

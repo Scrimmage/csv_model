@@ -5,10 +5,11 @@ describe CSVModel::Row do
   let(:header) { double("header") }
   let(:column) { double("column", key: "column one", model_attribute: :column_one, name: "Column One") }
   let(:columns) { [column] }
+  let(:index) { 1 }
   let(:primary_key_columns) { [] }
 
   let(:data) { ["Value One"] }
-  let(:subject) { described_class.new(header, data) }
+  let(:subject) { described_class.new(header, data, index) }
 
   before do
     allow(header).to receive(:columns).and_return(columns)
@@ -17,14 +18,21 @@ describe CSVModel::Row do
     allow(header).to receive(:primary_key_columns).and_return(primary_key_columns)
   end
 
+  describe "#csv_index, #model_index" do
+    it "returns the index the row was instantiated with" do
+      expect(subject.csv_index).to eq(index)
+      expect(subject.model_index).to eq(index)
+    end
+  end
+
   describe "#errors" do
     context "when no errors" do
-      let(:model) { double("model") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:model_finder) { double("model-finder") }
+      let(:subject) { described_class.new(header, data, index, row_model_finder: model_finder) }
       let(:model_instance) { double("model-instance", changed?: false, marked_for_destruction?: false, new_record?: false, valid?: true) }
 
       before do
-        allow(model).to receive(:find_row_model).and_return(model_instance)
+        allow(model_finder).to receive(:find_row_model).and_return(model_instance)
         allow(model_instance).to receive(:save)
       end
 
@@ -45,7 +53,7 @@ describe CSVModel::Row do
       end
 
       context "during a dry-run" do
-        let(:subject) { described_class.new(header, data, dry_run: true) }
+        let(:subject) { described_class.new(header, data, index, dry_run: true) }
 
         it "returns an error" do
           expect(subject.errors).to include("Duplicate row")
@@ -62,13 +70,13 @@ describe CSVModel::Row do
     end
 
     context "when the model instance has errors" do
-      let(:model) { double("model") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:model_finder) { double("model-finder") }
+      let(:subject) { described_class.new(header, data, index, row_model_finder: model_finder) }
       let(:model_instance) { double("model-instance", changed?: false, errors: errors, marked_for_destruction?: false, new_record?: false, valid?: false) }
       let(:errors) { ["Message one", "Message two"] }
 
       before do
-        allow(model).to receive(:find_row_model).and_return(model_instance)
+        allow(model_finder).to receive(:find_row_model).and_return(model_instance)
       end
 
       it "includes the model instance errors" do
@@ -156,6 +164,30 @@ describe CSVModel::Row do
     end
   end
 
+  describe "#process_row" do
+    let(:model_finder) { double("model-finder") }
+    let(:model_instance) { double("model-instance", changed?: true, marked_for_destruction?: false, new_record?: false, valid?: true) }
+    let(:subject) { described_class.new(header, data, index, row_model_finder: model_finder) }
+
+    before do
+      allow(model_finder).to receive(:find_row_model).and_return(model_instance)
+      allow(subject).to receive(:all_attributes).and_return(:all_attributes)
+    end
+
+    it "assigns attributes and saves the model instance" do
+      expect(model_instance).to receive(:assign_attributes).with(:all_attributes).ordered
+      expect(model_instance).to receive(:save)
+      subject.process_row
+    end
+
+    it "only processes a record once" do
+      expect(model_instance).to receive(:assign_attributes).with(:all_attributes).ordered
+      expect(model_instance).to receive(:save)
+      subject.process_row
+      subject.process_row
+    end
+  end
+
   describe "#status" do
     let(:model) { double("model") }
     let(:wrapper) { double("wrapper", status: :some_status) }
@@ -167,7 +199,7 @@ describe CSVModel::Row do
     end
 
     it "is delegates status to the model" do
-      expect(CSVModel::ObjectWithStatusSnapshot).to receive(:new).and_return(wrapper)
+      expect(CSVModel::RowActiveRecordAdaptor).to receive(:new).and_return(wrapper)
       expect(subject.status).to eq(:some_status)
     end
   end
@@ -194,6 +226,19 @@ describe CSVModel::Row do
         expect(subject.send(:all_attributes)).to eq(column_one: "Value One")
       end
 
+      context "with a column mapping" do
+        let(:model_mapper) { double("model-mapper") }
+        let(:subject) { described_class.new(header, data, index, row_model_mapper: model_mapper) }
+
+        before do
+          allow(model_mapper).to receive(:map_all_attributes).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
+        end
+
+        it "maps attributes" do
+          expect(subject.send(:all_attributes)).to eq(mapped_key: "mapped_value")
+        end
+      end
+
       context "with multiple columns" do
         let(:columns) { [
           double("column", key: "column one", model_attribute: :column_one),
@@ -214,8 +259,8 @@ describe CSVModel::Row do
     end
 
     describe "#inherit_or_delegate" do
-      let(:model) { double("model") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:model_finder) { double("model-finder") }
+      let(:subject) { described_class.new(header, data, index, row_model_finder: model_finder) }
 
       it "doesn't respond to inherit_or_delegate" do
         expect(subject.respond_to?(:inherit_or_delegate)).to eq(false)
@@ -233,7 +278,7 @@ describe CSVModel::Row do
       end
 
       it "invokes delegate method if delegate exists and internal method is not defined" do
-        expect(model).to receive(:some_method).with(:multiple, :args).and_return(:some_value)
+        expect(model_finder).to receive(:some_method).with(:multiple, :args).and_return(:some_value)
         expect(subject.send(:inherit_or_delegate, :some_method, :multiple, :args)).to eq(:some_value)
       end
     end
@@ -275,12 +320,25 @@ describe CSVModel::Row do
           expect(subject.send(:key_attributes)).to eq(column_one: "Value One", column_two: "Value Two")
         end
       end
+
+      context "with a column mapping" do
+        let(:model_mapper) { double("model-mapper") }
+        let(:subject) { described_class.new(header, data, index, row_model_mapper: model_mapper) }
+
+        before do
+          allow(model_mapper).to receive(:map_key_attributes).with({ column_one: "Value One" }).and_return(mapped_key: "mapped_value")
+        end
+
+        it "maps attributes" do
+          expect(subject.send(:key_attributes)).to eq(mapped_key: "mapped_value")
+        end
+      end
     end
 
     describe "#model_instance" do
-      let(:model) { double("model") }
+      let(:model_finder) { double("model-finder") }
       let(:model_instance) { double("model-instance") }
-      let(:subject) { described_class.new(header, data, model: model) }
+      let(:subject) { described_class.new(header, data, index, row_model_finder: model_finder) }
 
       before do
         allow(subject).to receive(:key_attributes).and_return(:key_attributes)
@@ -298,7 +356,7 @@ describe CSVModel::Row do
       end
 
       it "tries to find an instance via model#find_row_model when #find_row_model does not exist" do
-        expect(model).to receive(:find_row_model).with(:key_attributes).and_return(model_instance)
+        expect(model_finder).to receive(:find_row_model).with(:key_attributes).and_return(model_instance)
         expect(subject.send(:model_instance)).to eq(model_instance)
       end
 
@@ -313,37 +371,9 @@ describe CSVModel::Row do
       end
 
       it "tries to instantiate a new model via model#new_row_model when a model cannot be found and #new_row_model does not exist" do
-        expect(model).to receive(:find_row_model).with(:key_attributes).and_return(nil)
-        expect(model).to receive(:new_row_model).with(:key_attributes).and_return(model_instance)
+        expect(model_finder).to receive(:find_row_model).with(:key_attributes).and_return(nil)
+        expect(model_finder).to receive(:new_row_model).with(:key_attributes).and_return(model_instance)
         expect(subject.send(:model_instance)).to eq(model_instance)
-      end
-    end
-
-    describe "#process_row" do
-      let(:model) { double("model") }
-      let(:model_instance) { double("model-instance", changed?: true, marked_for_destruction?: false, new_record?: false, valid?: true) }
-      let(:subject) { described_class.new(header, data, model: model) }
-
-      before do
-        allow(model).to receive(:find_row_model).and_return(model_instance)
-        allow(subject).to receive(:all_attributes).and_return(:all_attributes)
-      end
-
-      it "doesn't respond to process_row" do
-        expect(subject.respond_to?(:process_row)).to eq(false)
-      end
-
-      it "assigns attributes and saves the model instance" do
-        expect(model_instance).to receive(:assign_attributes).with(:all_attributes).ordered
-        expect(model_instance).to receive(:save)
-        subject.send(:process_row)
-      end
-
-      it "only processes a record once" do
-        expect(model_instance).to receive(:assign_attributes).with(:all_attributes).ordered
-        expect(model_instance).to receive(:save)
-        subject.send(:process_row)
-        subject.send(:process_row)
       end
     end
   end

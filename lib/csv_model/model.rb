@@ -41,8 +41,8 @@ module CSVModel
       header_class.new(row, options)
     end
 
-    def create_row(row)
-      row = row_class.new(header, row, options)
+    def create_row(row, index)
+      row = row_class.new(header, row, index, options)
       row.mark_as_duplicate if is_duplicate_key?(row.key)
       row
     end
@@ -80,7 +80,7 @@ module CSVModel
           # end
 
           if index > 0 
-            @rows << create_row(row)
+            @rows << create_row(row, index)
           end
         end
       rescue CSV::MalformedCSVError => e
