@@ -65,10 +65,19 @@ describe CSVModel::RowActiveRecordAdaptor do
     end
     
     context "on a normal-run with an editable, valid model that is marked for destruction" do
-      let(:model) { double("model", changed?: true, marked_for_destruction?: true, new_record?: false, valid?: true) }
+      let(:model) { double("model", changed?: true, marked_for_destruction?: true, new_record?: false, persisted?: true, valid?: true) }
 
       it "calls destroy on underlying model" do
         expect(model).to receive(:destroy)
+        subject.save
+      end
+    end
+
+    context "on a normal-run with a un-persisted model that is marked for destruction" do
+      let(:model) { double("model", changed?: true, marked_for_destruction?: true, new_record?: true, persisted?: false, valid?: true) }
+
+      it "calls destroy on underlying model" do
+        expect(model).to_not receive(:destroy)
         subject.save
       end
     end
