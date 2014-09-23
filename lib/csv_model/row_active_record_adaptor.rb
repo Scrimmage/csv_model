@@ -60,7 +60,11 @@ module CSVModel
     end
 
     def save_or_destroy
-      marked_for_destruction? ? __getobj__.destroy : __getobj__.save
+      if marked_for_destruction?
+        __getobj__.destroy if persisted?
+      else
+        __getobj__.save
+      end
     end
 
     def status_for_existing_record
