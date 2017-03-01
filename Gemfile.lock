@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    csv_model (1.0.1)
+    csv_model (1.0.2)
 
 GEM
   remote: https://rubygems.org/
@@ -29,3 +29,6 @@ DEPENDENCIES
   csv_model!
   rake
   rspec (~> 3.0)
+
+BUNDLED WITH
+   1.13.6
