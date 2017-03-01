@@ -17,7 +17,7 @@ module CSVModel
 
     def index(value)
       index = column_index(value) || value
-      data[index] if index.is_a?(Fixnum) && index >= 0
+      data[index] if index.is_a?(Integer) && index >= 0
     end
     alias_method :[], :index
 
@@ -118,7 +118,7 @@ module CSVModel
 
     def model_instance
       @model_instance ||= begin
-        x = inherit_or_delegate(:find_row_model, key_attributes) 
+        x = inherit_or_delegate(:find_row_model, key_attributes)
         x ||= inherit_or_delegate(:new_row_model, key_attributes)
         x = model_adaptor.new(x)
       end
