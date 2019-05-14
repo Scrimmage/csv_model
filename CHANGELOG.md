@@ -1,3 +1,8 @@
+## 2.0.1 (2019-05-14)
+
+Other
+  - Fix handling of nil columns
+
 ## 2.0.0 (2018-08-23)
 
 Features:
