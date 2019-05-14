@@ -186,6 +186,11 @@ describe CSVModel::HeaderRow do
       expect(subject.valid?).to eq(true)
     end
 
+    it "returns true when the header is valid and contains a nil column" do
+      subject = described_class.new(["Column One", nil])
+      expect(subject.valid?).to eq(true)
+    end
+
     it "returns false when header has duplicate columns" do
       subject = described_class.new(data + data)
       expect(subject.valid?).to eq(false)
@@ -256,7 +261,7 @@ describe CSVModel::HeaderRow do
         expect(subject.respond_to?(:has_alternate_primary_key_columns?)).to eq(false)
       end
 
-      it "returns true when no primary key columns specified" do        
+      it "returns true when no primary key columns specified" do
         expect(subject.send(:has_alternate_primary_key_columns?)).to eq(true)
       end
 

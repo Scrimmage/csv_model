@@ -10,6 +10,10 @@ module CSVModel
     end
 
     refine NilClass do
+      def to_column_key
+        nil
+      end
+
       def try(*args)
         nil
       end
